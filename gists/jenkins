@@ -1,0 +1,28 @@
+server {
+  listen 443 ssl;       # Listen on port 80 for IPv4 requests
+
+  server_name     ci.whimmly.com;
+  access_log /var/log/nginx/jenkins.access.log;
+  error_log /var/log/nginx/jenkins.error.log;
+
+  # SSL
+  ssl_certificate /etc/nginx/conf.d/ci.domain.crt;
+  ssl_certificate_key /etc/nginx/conf.d/ci.domain.key;
+      include /etc/nginx/conf.d/options-ssl-nginx.conf;
+      ssl_dhparam /etc/nginx/conf.d/ssl-dhparams.pem;
+
+  location / {
+    include /etc/nginx/conf.d/proxy_params;
+    proxy_pass          http://docker-jenkins;
+    proxy_read_timeout  90s;
+
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+
+    # Fix potential "It appears that your reverse proxy set up is broken" error.
+    proxy_redirect http://docker-jenkins https://ci.whimmly.com;
+
+  }
+}
